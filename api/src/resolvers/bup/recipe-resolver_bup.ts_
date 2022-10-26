@@ -1,0 +1,75 @@
+import { Resolver, Query, FieldResolver, Arg, Root, Mutation, Ctx, Int, ID } from "type-graphql"
+import { getRepository, Repository } from "typeorm"
+
+import { Recipe } from "../models/recipe"
+import { Review } from "../models/review"
+
+import { RecipeInput } from "./types/recipe-input"
+//import { Context } from "./types/context"
+
+
+//resolvers and queries on graphql should match 
+@Resolver(of => Recipe)
+export class RecipeResolver {
+  constructor(
+     private readonly recipeRepository: Repository<Recipe>,
+     private readonly reviewRepository: Repository<Review>
+  ) {
+  //add connection name
+    this.recipeRepository  = getRepository(Recipe)
+    this.reviewRepository  = getRepository(Review)
+  }
+
+  @FieldResolver()
+  reviews(@Root() recipe: Recipe) {
+  console.log(recipe)
+    return this.reviewRepository.find({
+      cache: 1000,
+      where: { recipe: { id: recipe.recipeID } }, //doubtful 
+    });
+  }
+
+
+  @Query(returns => Recipe, { nullable: true })
+  async getRecipeById(@Arg("recipeId", type => ID) recipeID: number) {
+//    console.log(recipeId)
+    let recipe 
+    try {
+       recipe = this.recipeRepository.findOne(recipeID)
+    }
+    catch (e) {
+      console.log(e)
+      recipe = null
+    }
+    return recipe
+  }
+
+// should be converted to array input this should be sorted by rating , type orm conputed field
+// nearest location? // async map of id?  why not use the above function
+//how will the front end pass this? 
+
+  @Query(returns => [Recipe])
+  async getRecipes(): Promise<Recipe[]> {
+    return await this.recipeRepository.find()
+  }
+// Add mutation 
+  @Mutation(returns => Recipe)
+  addRecipe(@Arg("recipe") recipeInput: RecipeInput): Promise<Recipe> {
+    const recipe = this.recipeRepository.create({
+      ...recipeInput,
+    })
+    return this.recipeRepository.save(recipe)
+  }
+
+//
+  @Mutation(returns => Recipe)
+  editRecipe(@Arg("recipe") recipeInput: RecipeInput): Promise<Recipe> {
+    const recipe = this.recipeRepository.create({
+      ...recipeInput,
+    })
+    return this.recipeRepository.save(recipe)
+  }
+}
+
+
+

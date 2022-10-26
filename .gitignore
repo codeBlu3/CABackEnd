@@ -1,0 +1,6 @@
+postgres-data/
+postgresdata/
+mongodata/
+**node_modules/
+variables.env
+shared/

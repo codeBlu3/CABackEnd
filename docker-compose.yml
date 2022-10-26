@@ -1,0 +1,109 @@
+version: "3.5"
+
+#x-var: &DNODE_PORT 7000
+# use env file for the ports, nakakatamad na ang static port reaassignment
+
+services:
+  #---- database layer
+  pgdb:
+    image: "postgres:12"
+    #    restart: "always"
+    ports:
+      - "5432:5432"
+    env_file:
+      - "variables.env"
+    volumes:
+      - "./postgresdata:/var/lib/postgresql/data"
+
+  # mongo db default db, doesn't authenticate
+  mgdb:
+    image: "mongo:latest"
+    #    restart: "always"
+    ports:
+      - "27017:27017"
+    env_file:
+      - "variables.env"
+    volumes:
+      - "./init-mongo.js:/docker-entrypoint-initdb.d/mongo-init.js:ro"
+      - "./mongodata:/data/db"
+
+  #----- web servers
+  api:
+    build: "./api/."
+    ports:
+      - "7000:7000"
+    depends_on:
+      - pgdb
+      - mgdb
+    env_file:
+      - "variables.env"
+    #    environment:
+    #      - NODE_PORT: *DNODE_PORT
+    volumes:
+      - "./api/src:/usr/src/app/src"
+
+  # this should be, image server
+  upload:
+    build: "./upload/."
+    ports:
+      - "3000:3000"
+    #    depends_on:
+    #      - pgdb
+    #    env_file:
+    #      - "variables.env"
+    volumes:
+      - "./upload/src:/usr/src/app/src"
+      - "./shared:/usr/src/app/src/upload"
+
+  # auth server
+  auth:
+    build: "./auth/."
+    ports:
+      - "4000:4000"
+    depends_on:
+      - pgdb
+    env_file:
+      - "variables.env"
+    volumes:
+      - "./auth/src:/usr/src/app/src"
+
+#fastapi
+  fastapi:
+    build: "./fastapi/."
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./fastapi/app:/code/app"
+      - "./shared:/code/app/shared"
+
+
+
+
+
+
+  # auth server
+  #socket:
+  #  build: "./socket/."
+  #  ports:
+  #    - "5000:5000"
+  #  depends_on:
+  #    - pgdb
+  #    - mgdb
+  #  env_file:
+  #    - "variables.env"
+  #  volumes:
+  #    - "./socket/src:/usr/src/app/src"
+
+  # pgadmin4 docker image is not working -- restart was needed haha
+  #  pgadmin:
+  #    image: "dpage/pgadmin4"
+  #    restart: "always"
+  #    environment:
+  #      PGADMIN_DEFAULT_EMAIL: "admin@admin.com"
+  #      PGADMIN_DEFAULT_PASSWORD: "root"
+  #    ports:
+  #      - "5050:80"
+  #    depends_on:
+  #      - db
+
+

@@ -28,6 +28,7 @@ origins = [
     "http://localhost.tiangolo.com",
     "https://localhost.tiangolo.com",
     "http://localhost",
+    "http://localhost:8888",
     "http://localhost:19006",
 ]
 
@@ -95,7 +96,7 @@ async def ltHeadersByFilename(request: Request):
     strRep = str(byteJson, 'UTF-8')
     filename = json.loads(strRep)
     filename= filename['filename']
-    df = pd.read_csv(os.getcwd()  + f'/app/shared/{filename}.csv')
+    df = pd.read_csv(os.getcwd()  + f'/app/shared/{filename}')
     ltcolumns =  df.columns.to_list()
 
     return {'headerColumns': ltcolumns} 
